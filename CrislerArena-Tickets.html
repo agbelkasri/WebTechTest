@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<!--==================================================================
+//
+// Page: Crisler Arena Tickets Page
+// Description:
+//   This web page enables a customer to order tickets for upcoming 
+// events at Crisler Arena.
+// 
+//=================================================================-->
+
+<head>
+  
+  <title>Crisler Arena Tickets Page, v5</title>
+  <meta charset="UTF-8">
+  <meta name="author" content="Dan Ouellette"/>
+  <meta name="description" content="Crisler Arena"/>
+  <meta name="keywords" content="arena, events">
+  
+  <!-- External CSS link -->
+  <link rel="stylesheet" type="text/css" 
+    href="CrislerArena-ExternalStyles.css">
+  
+  <!-- jQuery link -->
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+  </script>  
+
+  <!-- Declare and store seats array -->
+  <script type="text/javascript">
+    "use strict";
+    
+    // Declare arrays
+    var events;
+    var seats;
+
+    //================================================================
+    // loadEvents
+    //================================================================
+    function loadEvents()
+    {
+      $(function()
+      {    
+        var queryString = "request=get";
+        $.getJSON(
+          "CrislerArena-Events.json", 
+          queryString, 
+          loadEventsResponse);
+      });
+    }
+    
+    //================================================================
+    // loadEventsResponse
+    //================================================================
+    function loadEventsResponse(data, status)
+    {
+      events = data;
+      console.log("Events data retrieved.");
+      setSeats();
+    }
+
+    //================================================================
+    // loadSeats
+    //================================================================
+    function loadSeats()
+    {
+      $(function()
+      {    
+        var queryString = "request=get";
+        $.getJSON(
+          "CrislerArena-Seats.json", 
+          queryString, 
+          loadSeatsResponse);
+      });
+    }
+    
+    //================================================================
+    // loadSeatsResponse
+    //================================================================
+    function loadSeatsResponse(data, status)
+    {
+      seats = data;
+      console.log("Seats data retrieved.");
+      loadEvents();
+    }
+
+    //================================================================
+    // seatTypeSelected
+    //================================================================
+    function seatTypeSelected()
+    {
+      
+      // Get seat cost
+      var selection = 
+        document.querySelector('input[name="rgSeatType"]:checked').value;
+      var index = 0;
+      while (index < seats.length && seats[index][0] != selection)
+        index = index + 1;
+
+      // Declare variables
+      var seatCost = seats[index][1];
+      var subtotal = txtTickets.value * seatCost;
+      var tax = subtotal * 0.06;
+      var total = subtotal + tax;
+      
+      // Set text boxes
+      txtSeatCost.value = seatCost.toFixed(2);
+      txtSubtotal.value = subtotal.toFixed(2);
+      txtTax.value = tax.toFixed(2);
+      txtTotal.value = total.toFixed(2);
+     
+      console.log("Radio button " + selection + 
+        " (" + index + ") selected.");
+        
+    }
+
+    //================================================================
+    // setEvents
+    //================================================================
+    function setEvents()
+    {
+    
+      // Declare variables
+      var i;
+      var op;
+      var tx;
+
+      // Loop through events array to build combo box
+      for (i = 0; i < events.length; i++)
+      {
+              
+        // Create option and add to combo box
+        op = document.createElement("option");
+        op.setAttribute("value", events[i][0]);
+        tx = document.createTextNode(events[i][0]);
+        op.appendChild(tx);                                
+        cmbEvent.appendChild(op);
+        console.log("Option '" + events[i][0] + ", " + 
+          events[i][1] + "' added.");
+
+      }
+      console.log("Events combo box set.");
+      seatTypeSelected();
+        
+    }
+
+    //================================================================
+    // setSeats
+    //================================================================
+    function setSeats()
+    {
+
+      // Declare variables
+      var i;
+      var inp;
+      var tx;
+
+      // Loop through events array to build combo box
+      for (i = 0; i < seats.length; i++)
+      {
+              
+        // Create radio button and add to radio group
+        inp = document.createElement("input");
+        inp.setAttribute("type", "radio");
+        inp.setAttribute("name", "rgSeatType");
+        inp.setAttribute("value", seats[i][0]);
+        inp.setAttribute("onchange", "seatTypeSelected()");
+        if (i == 0)
+          inp.setAttribute("checked", true);
+        divSeatType.appendChild(inp);
+        tx = document.createTextNode(seats[i][0]);
+        divSeatType.appendChild(tx);                                
+        inp = document.createElement("br");
+        divSeatType.appendChild(inp);                                
+        console.log("Radio button '" + seats[i][0] + ", " + 
+          seats[i][1] + "' added.");
+
+      }
+      console.log("Seat radio buttons set.");
+      setEvents();
+        
+    }
+
+    function updateTicketSales()
+    {
+      $(function()
+      {    
+        var queryString = "request=add";
+        $.getJSON(
+          "CrislerArena-Seats.json", 
+          queryString, 
+          loadSeatsResponse);
+      });
+    }
+
+  </script>
+  
+</head>
+ 
+<body onload="loadSeats()">
+
+  <!-- Header section -->
+  <div class="headerPanel">
+    <h1>
+      Crisler Arena Tickets
+    </h1>
+  </div>
+
+  <!-- Menu section -->
+  <div class="menuPanel">
+    <h2>
+      <a href="CrislerArena-Arena.html">Arena Page</a>
+      <a href="CrislerArena-Events.html">Events Page</a>
+      <a href="CrislerArena-Tickets.html">Tickets Page</a>
+    </h2>
+  </div>
+  <hr>
+  
+  <!-- Left panel -->
+  <div class="contentPanel3">
+  
+    <!-- Form -->
+    <form 
+      method="get" 
+      enctype="application/x-www-form-urlencoded"
+      action="CrislerArena-TicketsConfirmation.php" 
+      action="DatabaseInterface.php"
+      >
+
+      <!-- Customer name and e-mail -->
+      <label>Customer name:</label>
+      <input type="text" name="txtCustomerName" required>
+      <br><br>
+      <label>Customer e-mail:</label>
+      <input type="email" name="txtCustomerEmail" required>
+      <br><br>
+
+      <!-- Event name and date -->
+      <label>Event:</label>
+      <select id="cmbEvent" name="cmbEvent">
+      </select> 
+      <br><br>
+      
+      <label>Date:</label>
+      <input type="date" name="txtDate" value="2021-05-10" required>
+      <br><br>
+      
+      <!-- Seat type -->
+      <label>Seat type:</label>
+      <div id="divSeatType">
+      </div>
+      <br><br>
+
+      <!-- Ticket count -->
+      <label>Tickets (1-21):</label>
+      <input 
+        type="number" name="txtTickets" id="txtTickets" value="2" 
+        min="1" step="1" max="21" required
+        onchange="seatTypeSelected()" 
+        >
+      <br><br>
+      
+      <!-- Costs -->
+      <label>Seat cost ($):</label>
+      <input type="text" name="txtSeatCost" id="txtSeatCost" readonly>
+      <br><br>
+      <label>Subtotal ($):</label>
+      <input type="text" name="txtSubtotal" id="txtSubtotal" readonly>
+      <br><br>
+      <label>Tax ($):</label>
+      <input type="text" name="txtTax" id="txtTax" readonly>
+      <br><br>
+      <label>Total ($):</label>
+      <input type="text" name="txtTotal" id="txtTotal" readonly>
+      <br><br>
+      
+      <!-- Payment type fieldset -->
+      <fieldset>
+        <legend>Payment type</legend>
+        <input 
+          type="radio" name="rbPaymentType" value="Credit" checked
+          > Credit<br>
+        <input 
+          type="radio" name="rbPaymentType" value="PayPal"
+          > PayPal<br>
+        <input 
+          type="radio" name="rbPaymentType" value="Venmo"
+          > Venmo<br>
+      </fieldset>
+      <br><br>
+
+      <!-- Form buttons -->
+      <input type="submit" value="Submit" class="formButton" onsubmit="updateTicketSales()" >
+      <input type="reset" value="Reset" class="formButton">
+
+    </form>
+
+  </div>
+
+  <!-- Right panel -->
+  <div class="contentPanel3">
+  
+    <!-- Arena seating chart -->
+    <img 
+      src="CrislerArenaSeatingChart.png" alt="Image Missing!" 
+      width="70%" height="70%"
+      />
+
+  </div>
+
+  <!-- Footer section -->
+  <div class="footerPanel">
+    <h3>
+      Crisler Arena
+      &nbsp;&nbsp;333 East Stadium Blvd, Ann Arbor, MI 48109, MI
+      &nbsp;&nbsp;734-761-3355
+      &nbsp;&nbsp;<a href="mailto:info@crislerarena-annarbor.com">Email Us!</a>
+      &nbsp;&nbsp;Copyright &#169; 2021
+    </h3>
+  </div>
+  
+</body>
+ 
+</html>
